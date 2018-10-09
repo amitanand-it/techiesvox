@@ -1,0 +1,57 @@
+
+1) Create a table colors and input some values as given below:
+
+ items | colors
+-------+--------
+     1 | RED
+     1 | YELLOW
+     1 | PINK
+     1 | BLACK
+     2 | RED
+     2 | BLUE
+     2 | PINK
+     3 | BLACK
+     3 | GREEN
+     4 | RED
+     4 | YELLOW
+     4 | BROWN
+     4 | WHITE
+
+Question:  Find all the items Number having Red and Yellow both colors in their set. 
+
+Solution:   
+
+Step1: Create table
+-------------------------
+
+create table colors(
+	item_id  integer not null,
+	color varchar(10) not null
+);
+
+
+Step2: Populate Data	
+-------------------------
+
+Insert into colors(item_id, color) 
+values
+(1,'RED'), (1,'RED'),  (1,'YELLOW'), (1,'PINK'), (1,'BLACK'),
+(2,'RED'), (2,'BLUE'), (2,'PINK'),
+(3,'BLACK'), (3,'GREEN'),
+(4,'RED'), (4,'YELLOW'), (4,'BROWN'), (4,'WHITE');
+
+
+Step3: Query 
+-------------------------
+Method 1: using group by 
+select item_id from colors  where color in ('RED','YELLOW') group by item_id having count(distinct color) = 2;
+
+Method 2: using self join 
+select distinct c1.item_id from colors c1 join colors c2 on (c1.item_id = c2.item_id) where c1.color = 'RED' and c2.color = 'YELLOW' ;
+
+
+Method 3: using exists 
+select distinct item_id from colors c1 where color = 'RED' and exists (select 1 from colors c2 where c1.item_id = c2.item_id and color = 'YELLOW');
+
+
+
