@@ -1,0 +1,122 @@
+" Find file in current directory and edit it.
+let s:well_defined_modules_hash = {
+    \   "$b2bglobal{current_user}" : 'B2B::User',
+    \   "$b2bglobal{current_employee}" : 'Erp::Employee',
+    \   "$b2bglobal{current_profile}" : 'B2B::Company',
+    \ }
+
+
+function! Find()
+
+ let searched_str = FindFile()
+ let search_file = searched_str[0]
+ let search_text = searched_str[1]
+ if(empty(search_file))
+    echo "-:!! ... NO FILES FOUND TO OPEN !!:- 1111" 
+    return
+ endif
+
+"  echo search_file search_text
+
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    "searching processing starts from here
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    let cmd = "find 2>/dev/null | grep -vP '\.(obj|swp)$' | grep '".search_file."' | perl -ne 'print \"$.\\t$_\"'"
+
+    let l:list=system(cmd)
+    let l:num=strlen(substitute(l:list, "[^\n]", "", "g"))
+    if l:num < 1
+        echo "-:!! ".search_file." NOT FOUND !!:-" 
+        return
+    elseif l:num != 1
+        echo l:list
+        let l:input=input("Which ? (Enter=nothing)\n")
+        if strlen(l:input)==0
+          return
+        elseif strlen(substitute(l:input, "[0-9]", "", "g"))>0
+          echo "-:!! NOT A NUMBER !!:-" 
+          return
+        elseif l:input<1 || l:input>l:num
+          echo "-:!! OUT OF RANGE !!:-" 
+          return
+        endif
+        let l:line=matchstr("\n".l:list, "\n".l:input."\t[^\n]*")
+    else
+        let l:line=l:list
+    endif
+    let l:line=substitute(l:line, "^[^\t]*\t", "", "")
+
+    if(!empty(search_text))
+        let l:line = '+\/\\(' . search_text .  '\\)\\\C ' . l:line
+    endif
+
+    " executing command to open searched file
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    try
+    execute ':e ' . l:line  
+    catch 'Pattern not found'
+        let search_text= substitute(search_text,'^.*[+]','','g')
+        echo "-:!! ". search_text . " NOT FOUND !!:-" 
+    catch 'No write since last change'
+        echo "-:!! PLEASE SAVE YOUR FILE FIRST !!:-" 
+    endtry
+
+endfunction
+
+function! FindFile()
+    let search_file = ''
+    let search_text = ''
+    let cfile = expand('<cfile>')
+
+    if(!empty(matchstr(cfile,'^\w\=/\w\+$\|.html$')))
+        "removing http of https with host name if exists
+       let search_file = substitute(cfile,'^http\(s\)\?://.\{-}/','/','g')
+    elseif(!empty(matchstr(cfile,'\w\+::\w\+')))
+
+       let cfile = substitute(cfile,'^.\{-}\(\w\+\(::\w\+\)\+\).*$','\1,NO_TEXT','g')
+       let cfile = substitute(cfile,'\C^\(.*\)::\([-_A-Z0-9]\+\),NO_TEXT$','\1,\2','g')
+       let cfile = substitute(cfile,'\C^\(.*\)::\([a-z][-_a-zA-Z0-9]\+\),NO_TEXT$','\1,sub\\\\s\\\\+\2','g')
+       let [search_file,search_text] = split(cfile,',') 
+       let search_file = '/' . substitute(search_file,'::','/','g') . '.pm'
+       if(search_text == 'NO_TEXT')
+          let search_text = ''
+               let cfile = substitute(cfile,'\C^\(.*\)::\([a-z][-_a-zA-Z0-9]\+\),NO_TEXT$','\1,sub\\\\s\\\\+\2','g')
+               let [search_file,search_text] = split(cfile,',') 
+               if(search_text == 'NO_TEXT')
+                  let search_text = ''
+               endif
+
+               break
+           endif
+
+
+           "checking well known variable
+           let list = matchlist(getline("."), variable . '\s\{-}=\s\{-}\(\$[_a-zA-Z0-9}{]\+\).*$')
+           if(!empty(list))
+                let old_variable = variable
+                let variable = list[1]
+
+                if(variable =~ 'b2bglobal')
+                    let search_file = s:well_defined_modules_hash[variable] 
+                    break
+                endif
+
+                if(old_variable != variable)
+                    continue
+                endif
+           endif
+
+           break
+
+       endwhile
+       execute "silent normal! `a"
+
+       if(!empty(search_file))
+           let search_file = '/' . substitute(search_file,'::','/','g') . '.pm'
+       endif
+
+    endif
+
+    return [search_file, search_text]
+
+endfunction
