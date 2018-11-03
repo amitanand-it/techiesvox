@@ -1,0 +1,69 @@
+#!/bin/bash
+
+backup(){
+    local FILE=$1
+    if [[ -z "$FILE" ]];then
+            echo -e "\nUsage: backup <file-name>\n"
+            return
+    fi 
+
+    local BKUP_FILE=$FILE.$(date "+%F").bak
+    local CMD="cp $FILE $BKUP_FILE"
+
+    eval $CMD
+
+    if [ $? == 0 ] ; then
+        echo "File Backed Up with name : $BKUP_FILE"
+        return
+    fi
+
+    echo -e "Backed Up Failed:\nCommand is : $CMD" 
+}
+
+dotfiles-backup(){
+    local BKUP_FILE=dotfiles.$(date "+%F").tar
+    tar cvf $BKUP_FILE .bash_profile .bashrc .inputrc .bash_aliases .bash_utilities .proxy_config .byobu_utilities   
+    echo "A dotfiles tar has been created with name : $BKUP_FILE"
+}
+
+
+# searching for file using regex
+fn() {
+   local KW=$1;shift
+   KW=$(sed 's/*/.*/g' <<< $KW)
+   local FILTER_PART=$@
+   local CMD="find . -type f 2>/dev/null | grep -ie $KW\\$"
+   if [[ $@ ]];then
+       local extra=$(echo \| grep -ie $(sed -e 's/\s\+/ | grep -ie /g' <<< $FILTER_PART))
+       CMD="$CMD $extra"
+   fi
+   eval $CMD
+}
+
+
+minimize_js() {
+
+  RAW_FILE=$1
+  MIN_FILE=$2
+
+    if [[ -z "$RAW_FILE"  ||  -z "$MIN_FILE" ]];then
+          echo
+          echo "Usage: generate_min_js <RAW-FILE-NAME> <MIN-FILE-NAME>";
+          echo
+    else
+          $(java -jar /usr/local/bin/yuicompressor-2.4.7.jar  $RAW_FILE > $MIN_FILE) 
+    fi
+
+}
+
+get_table_names(){                                                                                                             TN=$1 
+    if [[ -z "$TN"  ]];then
+          echo -e "\nUsage: get_table_names <TABLE_NAME_HINT>\n"
+    else      
+          # you can write multiple commands using HERE document
+                    psql <<-QUERIES
+                    SELECT table_schema,table_name FROM information_schema.tables WHERE table_name ilike '%$TN%';
+                    QUERIES
+    fi
+}
+
