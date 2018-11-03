@@ -1,0 +1,60 @@
+# bind -P can be used to see all bindings
+
+#set keymap vi
+
+set editing-mode vi
+set disable-completion off
+
+#opening last result files
+#######################################################
+",va":"vi $(!! | awk '{print $NF}')\n"
+",v1":"vi $(!! | awk '{print $NF}' | sed -n '1p')\n"
+",v2":"vi $(!! | awk '{print $NF}' | sed -n '2p')\n"
+",v3":"vi $(!! | awk '{print $NF}' | sed -n '3p')\n"
+",vl":"vi $(!! | awk '{print $NF}' | sed -n '$p')\n"
+#######################################################
+
+",as":"./mason/shell_scripts/apache_skel.sh"
+",ss":"./stopall && ./startall\n"
+",cs":"startall\n"
+
+# git files
+",gs":"git status -su \n"
+",gg":"git grep -i ''"
+",ga":"git add ''"
+",gr":"git review"
+#",gd":"git diff "
+# ",gp":"git pull "
+",gp":"gp \n"
+",gf":"gitfs "
+",gl":"git log "
+",gc":"git commit "
+
+",gh":"git reset --hard "
+",gu":"git reset --soft HEAD~1 "
+",gm":"git commit --amend "
+",go":"git checkout "
+",gw":"gitstash "
+#",r":history-search-backward
+
+",ll":"PERL5LIB=$PERL5LIB:perl_modules_02:perl_modules_01 "
+#",r":"cd /mnt/raid/shared/git-changes/REPO6678\n"
+#",r1":"cd /mnt/raid/shared/git-changes/REPO6678.1\n"
+#",r2":"cd /mnt/raid/shared/git-changes/REPO6678.2\n"
+
+
+"\C-l":clear-screen
+"\C-p":history-search-backward
+"\C-n":history-search-forward
+"\C-A":beginning-of-line
+"\C-E":end-of-line
+"":yank-last-arg
+
+#will be done later
+#"":yank-nth-arg 
+
+
+#set keymap vi-command
+#"\e,":"\e0\e."
+#"\ej":"\e1\e."
+#"\ek":"\e2\e."
