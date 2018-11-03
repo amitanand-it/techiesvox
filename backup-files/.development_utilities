@@ -1,0 +1,111 @@
+#!/bin/bash 
+
+apacheskel(){                                                                                                                
+  PORT=$1;
+  if [ -z "$PORT" ];then
+      PORT='33000';
+  fi
+
+  /mnt/raid/shared/git-changes/$REPO/stopall
+  /mnt/raid/shared/git-changes/$REPO/mason/shell_scripts/apache_skel.sh --apache2-port=$PORT &&
+  /mnt/raid/shared/git-changes/$REPO/startall
+}
+
+
+
+startall() {
+        echo 
+        cat startall  | grep -P "echo \w.*\d$"
+        echo $( cat startall | grep Apache2 | sed -e 's/www/getdistributor/' -e 's/Apache2/GetDistributor/' )/
+        echo $( cat startall | grep Apache2 | sed -e 's/Apache2/Housekeeping/' )/housekeeping/
+        echo $( cat startall | grep Apache2 | sed -e 's/Apache2/MTI/' )/my-tradeindia/
+        echo $( cat startall | grep Apache2 | sed -e 's/Apache2/MTI/' )/component/payment/paytm_do.html?order_id=1234
+        echo
+}
+
+
+datamining-query() {                                                                                                         
+  FILE=$1
+  OUT=$2
+    if [[ -z "$FILE" ]];then
+          echo
+          echo "Usage: datamining-query <SQL-FILE-NAME> [<OUTPUT-FILE>]";
+          echo
+    else
+            if [[ -z "$OUT" ]];then
+                rpsql_pwless -A -F";" -f $FILE 
+           else
+                rpsql_pwless -A -F";" -f $FILE > $OUT
+                rsync -az --remove-source-files  -e ssh $OUT amitanand@192.168.1.160:~/datamining/
+                echo -e "Done successfully... \nFile Path: amitanand@192.168.1.160:~/datamining/$OUT"
+#                scp $OUT amitanand@192.168.1.160:~/datamining/
+          fi
+    fi
+}
+
+get_userdetails(){                                                                                                           
+  USER=$1
+    if [[ -z "$USER"  ]];then
+          echo -e "\nUsage: get_userid <USERNAME>\n"
+    else      
+          # you can write multiple commands using HERE document
+                    psql <<-QUERIES
+                    select userid,username,password from general.user_accounts where username ilike '%$USER%';
+                    QUERIES
+    fi
+}
+
+
+change_user_password() {                                                                                                     
+
+  USERID=$1
+  PASSWD=$2
+    if [[ -z "$USERID"  ||  -z "$PASSWD" ]];then
+          echo -e "\nUsage: change_user_password <USERID> <PASSWD>\n"
+    else      
+          # you can write multiple commands using HERE document
+                    psql <<-QUERIES
+                    update general.user_accounts set pw_hash= crypt( coalesce('$PASSWD','') , gen_salt('md5')) where userid= $USERID; 
+                    select username,'$PASSWD' as passwd from general.user_accounts where userid= $USERID;
+                    QUERIES
+
+    fi
+}   
+
+change_hk_password() {                                                                                                       
+
+  PASSWD=$1
+  USER_ID=6678
+
+    if [[ -z "$PASSWD" ]];then
+          echo -e "\nUsage: change_hk_password <PASSWD>\n"
+    else
+          # you can write multiple commands using HERE document
+          psql <<-QUERIES
+          update erp.employees set password='$PASSWD',last_pass_change=current_date , last_updated =  extract(epoch from now())::int  where user_id=$USER_ID and most_recent is true;
+          select username,'$PASSWD' as passwd from erp.employees where user_id= $USER_ID and most_recent is true; 
+                    QUERIES
+
+    fi
+}
+
+
+#repo-backup(){
+#    git status -u -s | awk '{print $2}' | xargs tar cvf ~/$REPO-`date +%F`.tar                                               
+#}
+
+# find-modules() {
+  # DIR=$1
+    # if [[ -z "$DIR"  ]];then
+          # echo
+          # echo "Usage: find-modules <DIR-NAME>";
+          # echo
+    # else
+          # find $DIR \( ! -regex '.*/\..*' \)  -type f -printf '"%p"\n' | xargs grep -ro -P "use.*\w+::\w+;"  2>/dev/null  | tee /tmp/m.txt
+          # sed -i 's/^.*:use//' /tmp/m.txt
+          # cat /tmp/m.txt | sort -u > modules.txt 
+          # echo 'File created in current directory: modules.txt';
+    # fi
+# 
+# }
+
