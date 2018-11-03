@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# searching for file using regex in git status result
+ffn(){
+   local KW=$1;shift
+   KW=$(sed 's/*/.*/g' <<< $KW)
+   local FILTER_PART=$@
+   local CMD="git status -u -s | grep -ie $KW\\$ | awk '{print \$NF}'"
+   if [[ $@ ]];then
+       local extra=$(echo \| grep -ie $(sed -e 's/\s\+/ | grep -ie /g' <<< $FILTER_PART))
+       CMD="$CMD $extra"
+   fi
+   eval $CMD
+}
+
+gitbackup(){
+    local REPO=$(basename "$PWD")
+    git status -u -s | awk '{print $2}' | xargs tar cvf ~/$REPO-`date +%F`.tar 
+}
+
