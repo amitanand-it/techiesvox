@@ -1,0 +1,234 @@
+
+Skip to content
+
+    Pull requests
+    Issues
+    Marketplace
+    Explore
+
+    @amitanand2151
+
+0
+0
+
+    0
+
+amitanand2151/techdrops
+Code
+Issues 0
+Pull requests 0
+Projects 0
+Wiki
+Insights
+Settings
+techdrops/dot-files/.my_bash_tools
+4f780b2 26 days ago
+@amitanand2151 amitanand2151 Bash related files has been added
+192 lines (161 sloc) 5.2 KB
+#!/bin/bash
+
+rename-session ()
+{
+    local old_name=$1;
+    local new_name=$2;
+    if [ $# -le 1 ]; then
+        echo -e "\nUsage: rename-session <OLD-NAME> <NEW-NAME>\n";
+    else
+        byobu rename -t $old_name $new_name;
+    fi
+}
+
+
+create_dot_files_tarball ()
+{
+    tar cvf dot-files.tar .bash_profile .bashrc .inputrc .my_bash_tools .psqlrc .vimrc
+}
+
+startall() {
+   echo 
+   cat startall  | grep -P "echo \w.*\d$"
+   echo $( cat startall | grep Apache2 | sed -e 's/www/getdistributor/' -e 's/Apache2/GetDistributor/' )/ 
+   echo $( cat startall | grep Apache2 | sed -e 's/Apache2/Housekeeping/' )/housekeeping/ 
+   echo $( cat startall | grep Apache2 | sed -e 's/Apache2/MTI/' )/my-tradeindia/ 
+   echo $( cat startall | grep Apache2 | sed -e 's/Apache2/MTI/' )/component/payment/paytm_do.html?order_id=1234
+   echo 
+}
+
+# searching for file using regex in git status result
+ffn(){
+   local KW=$1;shift
+   KW=$(sed 's/*/.*/g' <<< $KW)
+   local FILTER_PART=$@
+   local CMD="git status -u -s | grep -ie $KW\\$ | awk '{print \$NF}'"
+   if [[ $@ ]];then
+       local extra=$(echo \| grep -ie $(sed -e 's/\s\+/ | grep -ie /g' <<< $FILTER_PART))
+       CMD="$CMD $extra"
+   fi
+   eval $CMD
+}
+
+# searching for file using regex
+fn() {
+   local KW=$1;shift
+   KW=$(sed 's/*/.*/g' <<< $KW)
+   local FILTER_PART=$@
+   local CMD="find . -type f 2>/dev/null | grep -ie $KW\\$"
+   if [[ $@ ]];then
+       local extra=$(echo \| grep -ie $(sed -e 's/\s\+/ | grep -ie /g' <<< $FILTER_PART))
+       CMD="$CMD $extra"
+   fi
+   eval $CMD
+}
+
+
+backupdir(){
+
+    DIR=$1
+    FILE=$2-$(date "+%F").tar
+
+    if [  $# -le 1  ]; then
+            echo -e "\nUsage: classnotes-backup <dir-to-tar> <tar-file-name>\n"
+    else
+            tar cvf $FILE $DIR
+            echo "classnotes created in file: $FILE"
+    fi
+
+}
+
+generate_min_js() {
+
+  RAW_FILE=$1
+  MIN_FILE=$2
+
+    if [[ -z "$RAW_FILE"  ||  -z "$MIN_FILE" ]];then
+          echo
+          echo "Usage: generate_min_js <RAW-FILE-NAME> <MIN-FILE-NAME>";
+          echo
+    else
+          $(java -jar /usr/local/bin/yuicompressor-2.4.7.jar  $RAW_FILE > $MIN_FILE) 
+    fi
+
+}
+
+datamining-query() {
+  FILE=$1
+  OUT=$2
+    if [[ -z "$FILE" ]];then
+          echo
+          echo "Usage: datamining-query <SQL-FILE-NAME> [<OUTPUT-FILE>]";
+          echo
+    else
+            if [[ -z "$OUT" ]];then
+                rpsql_pwless -A -F";" -f $FILE 
+           else
+                rpsql_pwless -A -F";" -f $FILE > $OUT
+                rsync -az --remove-source-files  -e ssh $OUT amitanand@192.168.1.160:~/datamining/
+                echo -e "Done successfully... \nFile Path: amitanand@192.168.1.160:~/datamining/$OUT"
+#                scp $OUT amitanand@192.168.1.160:~/datamining/
+          fi
+    fi
+}
+
+get_userdetails(){
+  USER=$1
+    if [[ -z "$USER"  ]];then
+          echo -e "\nUsage: get_userid <USERNAME>\n"
+    else      
+          # you can write multiple commands using HERE document
+					psql <<-QUERIES
+					select userid,username,password from general.user_accounts where username ilike '%$USER%';
+					QUERIES
+    fi
+}
+
+change_user_password() {
+
+  USERID=$1
+  PASSWD=$2
+    if [[ -z "$USERID"  ||  -z "$PASSWD" ]];then
+          echo -e "\nUsage: change_user_password <USERID> <PASSWD>\n"
+    else      
+          # you can write multiple commands using HERE document
+					psql <<-QUERIES
+					update general.user_accounts set pw_hash= crypt( coalesce('$PASSWD','') , gen_salt('md5')) where userid= $USERID; 
+					select username,'$PASSWD' as passwd from general.user_accounts where userid= $USERID;
+					QUERIES
+
+    fi
+}
+
+get_table_names(){
+  TN=$1
+    if [[ -z "$TN"  ]];then
+          echo -e "\nUsage: get_table_names <TABLE_NAME_HINT>\n"
+    else      
+          # you can write multiple commands using HERE document
+					psql <<-QUERIES
+					SELECT table_schema,table_name FROM information_schema.tables WHERE table_name ilike '%$TN%';
+					QUERIES
+    fi
+}
+
+change_hk_password() {
+
+  PASSWD=$1
+  USER_ID=6678
+
+    if [[ -z "$PASSWD" ]];then
+          echo -e "\nUsage: change_hk_password <PASSWD>\n"
+    else      
+          # you can write multiple commands using HERE document
+          psql <<-QUERIES
+          update erp.employees set password='$PASSWD',last_pass_change=current_date , last_updated =  extract(epoch from now())::int  where user_id=$USER_ID and most_recent is true;
+          select username,'$PASSWD' as passwd from erp.employees where user_id= $USER_ID and most_recent is true; 
+					QUERIES
+          
+    fi
+}
+
+backupchange(){
+    git status -u -s | awk '{print $2}' | xargs tar cvf ~/$REPO-`date +%F`.tar
+}
+
+apacheskel(){
+
+  PORT=$1;
+  if [ -z "$PORT" ];then
+  PORT='33330';
+  fi
+
+  /mnt/raid/shared/git-changes/$REPO/stopall 
+  /mnt/raid/shared/git-changes/$REPO/mason/shell_scripts/apache_skel.sh --apache2-port=$PORT &&
+  /mnt/raid/shared/git-changes/$REPO/startall 
+}
+
+# find-modules() {
+  # DIR=$1
+    # if [[ -z "$DIR"  ]];then
+          # echo
+          # echo "Usage: find-modules <DIR-NAME>";
+          # echo
+    # else
+          # find $DIR \( ! -regex '.*/\..*' \)  -type f -printf '"%p"\n' | xargs grep -ro -P "use.*\w+::\w+;"  2>/dev/null  | tee /tmp/m.txt
+          # sed -i 's/^.*:use//' /tmp/m.txt
+          # cat /tmp/m.txt | sort -u > modules.txt 
+          # echo 'File created in current directory: modules.txt';
+    # fi
+# 
+# }
+
+    © 2018 GitHub, Inc.
+    Terms
+    Privacy
+    Security
+    Status
+    Help
+
+    Contact GitHub
+    Pricing
+    API
+    Training
+    Blog
+    About
+
+Press h to open a hovercard with more details.
