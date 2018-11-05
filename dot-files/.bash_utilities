@@ -56,14 +56,15 @@ minimize_js() {
 
 }
 
-get_table_names(){                                                                                                             TN=$1 
+get_table_names(){                                                                                                             
+    local TN=$1 
     if [[ -z "$TN"  ]];then
           echo -e "\nUsage: get_table_names <TABLE_NAME_HINT>\n"
     else      
           # you can write multiple commands using HERE document
                     psql <<-QUERIES
                     SELECT table_schema,table_name FROM information_schema.tables WHERE table_name ilike '%$TN%';
-                    QUERIES
+QUERIES
     fi
 }
 
