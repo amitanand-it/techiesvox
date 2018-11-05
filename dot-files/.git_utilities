@@ -18,3 +18,120 @@ gitbackup(){
     git status -u -s | awk '{print $2}' | xargs tar cvf ~/$REPO-`date +%F`.tar 
 }
 
+#####################################################
+#to see last commit files after sending to review
+#####################################################
+gitlcf() {
+  echo ==========   CHANGE FILES =====================
+  local COMMIT_ID=$1
+  if [ -z "$COMMIT_ID" ];then
+      git log -1 --pretty=format:%H | xargs  git diff-tree --pretty=short  --name-status  -r
+  else
+      git diff-tree --pretty=short  --name-status  -r $COMMIT_ID
+  fi
+  echo =============================================
+}
+
+git-ignored(){
+    git ls-files -v | grep '^[[:lower:]]'
+}
+git-ignore(){
+    local FILE=$1
+    if [[ -z $FILE ]]; then
+         echo
+         echo "Usage: git-ignore <FILE-TO-IGNORE>";
+         echo
+         return
+    fi
+
+    git update-index --assume-unchanged $FILE
+    git ls-files -v | grep '^[[:lower:]]'
+}
+
+git-unignore(){
+    local FILE=$1
+    if [[ -z $FILE ]]; then
+         echo
+         echo "Usage: git-unignore <FILE-TO-UNIGNORE>";
+         echo
+         return
+    fi
+    git update-index --no-assume-unchanged $FILE
+}
+
+
+get-unreachable-stash-commits(){
+    git fsck --unreachable | grep commit | cut -d\  -f3 | xargs git log --merges --no-walk 
+    # To fix unreachable stashes
+    # git stash store -m 'stash name' commit-id
+}
+
+gitlog_follow_file() {
+   local FILE=$1
+   git log --pretty=format:"%h - %an, %ar : %s"  --follow $FILE
+}
+
+gitundo-commit(){
+  git reset --soft HEAD~1
+}
+
+gitstash() {
+    local STASH_NAME=$1
+    if [[ -z $STASH_NAME ]]; then
+         echo
+         echo "Usage: gitstash <stash-name>";
+         echo
+     else
+         # -u indicates --include-untracked
+         git stash save -u $STASH_NAME 
+     fi 
+}
+
+gitdiff-file() {
+    local COMMIT1=$1
+    local COMMIT2=$2
+    local FILE=$1
+    if [[ -z "$COMMIT1"  || -z "$COMMIT2" || -z "$FILE" ]];then
+            echo
+            echo "Usage: gitdiff_file <commit-id1> <commit-id2> <filename>";
+            echo "To find the commit-ids use command: gitlog_file_changes <filename>";
+            echo "This command will give commit-ids in descending order." 
+            echo "Please give commit-ids to gitdiff_file command in sequence in which changes committed."
+            echo
+    else
+            git diff  $COMMIT1 $COMMIT2  $FILE
+    fi
+}
+
+gitlog-file-changes(){
+    local FILE=$1
+    if [ -z "$FILE" ];then
+            echo "Usage: gitlog_file_changes <filename>";
+    else
+            git log --pretty=oneline $FILE
+    fi
+}
+
+#####################################################
+#to search commits by contents 
+#####################################################
+gitlog-findby-content(){
+    local INPUT=$1
+    git log -S${INPUT} --oneline 
+}
+
+
+
+
+#####################################################
+#to search commits using subject
+#####################################################
+gitlog-findby-subject(){
+    local INPUT=$1
+    git log --oneline --grep="$INPUT" -i
+}
+
+
+
+
+

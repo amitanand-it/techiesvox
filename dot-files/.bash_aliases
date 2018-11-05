@@ -1,8 +1,18 @@
-#if user is not root, pass all commands via sudo #
+#!/bin/bash 
+
+# if user is not root, pass all commands via sudo #
 if [ $UID -ne 0 ]; then
     alias reboot='sudo reboot'
-    alias update='sudo apt-get upgrade'
+    alias update='sudo apt-get update'
 fi
+
+# Now a function has been made in bashrc for more utility features 
+#alias fn="find -iname 2>/dev/null" 
+
+# byobu related alias 
+alias sessions='tmux ls'
+alias kill-session='tmux kill-session -t'
+
 
 alias path='echo -e ${PATH//:/\\n}'
 alias libpath='echo -e ${LD_LIBRARY_PATH//:/\\n}'
@@ -39,3 +49,10 @@ alias lt='ls -ltrh'         #  Sort by date, most recent last.
 alias lk='ls -lSrh'         #  Sort by size, biggest last.
 alias lc='ls -ltcr'        #  Sort by/show change time,most recent last.
 alias lu='ls -ltur'        #  Sort by/show access time,most recent last.
+
+alias tarc='tar cvf '
+alias tarx='tar xvf '
+alias tart='tar tvf '
+
+
+
