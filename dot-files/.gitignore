@@ -1,0 +1,13 @@
+.*
+perl5**
+!.vimrc
+!.bashrc
+!.inputrc
+!.psqlrc
+!.git_functions
+!.gitconfig
+!.my_bash_tools
+!.bash_profile
+!.development_utilities  
+!.bash_utilities  
+!.git_utilities
