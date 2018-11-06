@@ -22,7 +22,6 @@ alias ...="cd ../.."
 alias ....="cd ../../.."
 alias mkdir='mkdir -pv'
 alias c='clear'
-alias mount='mount |column -t' 
 alias mounted='mount | column -t | grep /dev/sd' 
 alias h='history'
 alias j='jobs -l'
