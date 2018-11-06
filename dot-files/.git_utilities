@@ -10,6 +10,16 @@ alias go='git checkout '
 alias gk='gitk --all&'
 alias gx='gitx --all'
 
+#git status aliases                                                                                                          
+alias gss='git diff --name-only --cached' 
+alias gsm='git ls-files -m'
+#alias gsm='git diff --name-only'
+alias gsn='git ls-files --others --exclude-standard'
+alias gsd='git ls-files -d'
+alias gsswp='git ls-files -o | grep swp' 
+alias gso='git ls-files -o' 
+
+
 # searching for file using regex in git status result
 ffn(){
    local KW=$1;shift
